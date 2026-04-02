@@ -179,3 +179,4 @@ The app uses **৳ (Bangladeshi Taka)** by default. To change currency symbol, s
 
 MIT — free to use and modify.
 # mess-manager
+# mess-manager
