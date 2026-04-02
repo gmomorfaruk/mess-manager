@@ -9,6 +9,7 @@ export default function LoginPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
+  const [cooldown, setCooldown] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
@@ -20,9 +21,30 @@ export default function LoginPage() {
     });
   }, [router, supabase.auth]);
 
+  useEffect(() => {
+    if (cooldown <= 0) return;
+
+    const timer = setInterval(() => {
+      setCooldown((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [cooldown]);
+
   const handleEmailSignIn = async () => {
     setError(null);
     setSent(false);
+
+    if (cooldown > 0) {
+      setError(`Please wait ${cooldown}s before requesting another email.`);
+      return;
+    }
 
     if (!name.trim()) {
       setError("Please enter your name");
@@ -51,8 +73,15 @@ export default function LoginPage() {
       if (authError) throw authError;
 
       setSent(true);
+      setCooldown(60);
     } catch (err: any) {
-      setError(err?.message ?? "Something went wrong");
+      const message = String(err?.message ?? "Something went wrong");
+      if (message.toLowerCase().includes("rate limit")) {
+        setError("Too many email requests. Wait 60 seconds, then try once.");
+        setCooldown(60);
+      } else {
+        setError(message);
+      }
     } finally {
       setLoading(false);
     }
@@ -102,10 +131,10 @@ export default function LoginPage() {
 
           <button
             onClick={handleEmailSignIn}
-            disabled={loading}
+            disabled={loading || cooldown > 0}
             className="w-full btn-primary h-12 text-sm font-semibold"
           >
-            {loading ? "Sending link..." : "Continue"}
+            {loading ? "Sending link..." : cooldown > 0 ? `Try again in ${cooldown}s` : "Continue"}
           </button>
 
           {sent && (
