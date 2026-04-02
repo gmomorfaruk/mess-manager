@@ -95,7 +95,7 @@ export default function DailyEntryClient() {
         took_morning: row.morning,
         took_lunch: row.lunch,
         took_dinner: row.dinner,
-        created_by: currentMember.user_id,
+        created_by: null,
       }));
 
       const { error } = await supabase
@@ -126,7 +126,7 @@ export default function DailyEntryClient() {
         date: selectedDate,
         amount,
         note: newCostNote || null,
-        created_by: currentMember.user_id,
+        created_by: null,
       });
       if (error) throw error;
       setNewCostAmount("");

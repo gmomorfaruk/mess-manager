@@ -65,7 +65,7 @@ export default function DepositsClient() {
         amount: amt,
         date,
         note: note || null,
-        created_by: currentMember.user_id,
+        created_by: null,
       });
       if (error) throw error;
       setAmount("");
