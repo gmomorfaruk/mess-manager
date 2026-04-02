@@ -20,7 +20,7 @@ export default function LoginPage() {
 
     try {
       const session = JSON.parse(sessionRaw);
-      if (session?.email) router.replace("/");
+      if (session?.email) router.replace("/dashboard");
     } catch {
       window.localStorage.removeItem("mess_manager_session_v1");
     }
