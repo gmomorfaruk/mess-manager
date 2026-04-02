@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -18,7 +18,7 @@ export default function AppShell({
   const router = useRouter();
   const { user, member, loading } = useAuth();
   const [messName, setMessName] = useState<string | undefined>(undefined);
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -40,7 +40,7 @@ export default function AppShell({
       .then(({ data }) => {
         setMessName(data?.name);
       });
-  }, [member?.mess_id, supabase]);
+  }, [member?.mess_id]);
 
   useEffect(() => {
     if (!loading && user && requiredRoles && member && !requiredRoles.includes(member.role)) {

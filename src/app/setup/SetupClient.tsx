@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { UtensilsCrossed, Plus, Users, ArrowRight, CheckCircle } from "lucide-react";
@@ -17,7 +17,7 @@ export default function SetupClient() {
   const [memberName, setMemberName] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
 
   useEffect(() => {
     const session = readLocalSession();
@@ -55,7 +55,7 @@ export default function SetupClient() {
       }
     }, 5000);
     return () => clearInterval(interval);
-  }, [sessionEmail, sessionId, supabase, router]);
+  }, [sessionEmail, sessionId, router]);
 
   const createMess = async () => {
     if (!messName.trim() || !memberName.trim() || !sessionEmail || !sessionId) {

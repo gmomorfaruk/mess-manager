@@ -19,9 +19,11 @@ import {
 } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export default function DashboardClient() {
   const { member, loading: authLoading } = useAuth();
+  const router = useRouter();
   const [{ year, month }, setYearMonth] = useState(getCurrentMonth());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -81,14 +83,15 @@ export default function DashboardClient() {
 
   const isMember = member.role === "member";
 
+  useEffect(() => {
+    if (isMember) {
+      router.replace("/member");
+    }
+  }, [isMember, router]);
+
   // Members can only see their own data
   if (isMember) {
-    return (
-      <div className="text-center py-20">
-        <p className="text-ink-500">Redirecting to your personal dashboard…</p>
-        <Link href="/member" className="btn-primary mt-4 inline-flex">Go to My Dashboard</Link>
-      </div>
-    );
+    return <PageLoader />;
   }
 
   const stats = settings

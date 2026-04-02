@@ -51,7 +51,7 @@ export default function LoginPage() {
 
       const { data, error: memberError } = await supabase
         .from("mess_members")
-        .select("id")
+        .select("id, role")
         .ilike("email", cleanEmail)
         .eq("is_active", true)
         .order("joined_at", { ascending: false })
@@ -63,7 +63,11 @@ export default function LoginPage() {
         return;
       }
 
-      router.push(data ? "/dashboard" : "/setup");
+      if (data?.role === "member") {
+        router.push("/member");
+      } else {
+        router.push(data ? "/dashboard" : "/setup");
+      }
     } catch {
       router.push("/setup");
     } finally {
