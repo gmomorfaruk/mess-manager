@@ -1,43 +1,62 @@
-import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import Sidebar from "@/components/layout/Sidebar";
 import MobileHeader from "@/components/layout/MobileHeader";
+import { PageLoader } from "@/components/ui/Spinner";
 
-export default async function AppShell({
+export default function AppShell({
   children,
   requiredRoles,
 }: {
   children: React.ReactNode;
   requiredRoles?: string[];
 }) {
+  const router = useRouter();
+  const { user, member, loading } = useAuth();
+  const [messName, setMessName] = useState<string | undefined>(undefined);
   const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
 
-  if (!user) redirect("/login");
+  useEffect(() => {
+    if (!loading && !user) {
+      router.replace("/login");
+    }
+  }, [loading, user, router]);
 
-  const { data: member } = await supabase
-    .from("mess_members")
-    .select("*, messes(name)")
-    .eq("user_id", user.id)
-    .eq("is_active", true)
-    .maybeSingle();
+  useEffect(() => {
+    if (!member?.mess_id) {
+      setMessName(undefined);
+      return;
+    }
 
-  if (!member) redirect("/setup");
+    supabase
+      .from("messes")
+      .select("name")
+      .eq("id", member.mess_id)
+      .maybeSingle()
+      .then(({ data }) => {
+        setMessName(data?.name);
+      });
+  }, [member?.mess_id, supabase]);
 
-  if (requiredRoles && !requiredRoles.includes(member.role)) {
-    redirect("/dashboard");
-  }
+  useEffect(() => {
+    if (!loading && user && requiredRoles && member && !requiredRoles.includes(member.role)) {
+      router.replace("/dashboard");
+    }
+  }, [loading, user, member, requiredRoles, router]);
 
-  const messName = (member as any).messes?.name;
+  if (loading) return <PageLoader />;
+  if (!user) return <PageLoader />;
 
   return (
     <div className="flex min-h-screen bg-surface-50">
-      {/* Desktop sidebar */}
       <div className="hidden lg:flex">
         <Sidebar messName={messName} />
       </div>
 
-      {/* Main */}
       <div className="flex-1 flex flex-col min-w-0">
         <MobileHeader messName={messName} />
         <main className="flex-1 p-4 lg:p-8 max-w-7xl w-full mx-auto animate-fade-in">

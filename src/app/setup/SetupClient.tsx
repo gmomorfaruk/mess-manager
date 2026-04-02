@@ -5,13 +5,13 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { UtensilsCrossed, Plus, Users, ArrowRight, CheckCircle } from "lucide-react";
 import toast from "react-hot-toast";
-import { User } from "@supabase/supabase-js";
+import { readLocalSession } from "@/lib/localSession";
 
 type Step = "choose" | "create" | "wait" | "done";
 
 export default function SetupClient() {
   const [step, setStep] = useState<Step>("choose");
-  const [user, setUser] = useState<User | null>(null);
+  const [sessionEmail, setSessionEmail] = useState("");
   const [messName, setMessName] = useState("");
   const [memberName, setMemberName] = useState("");
   const [loading, setLoading] = useState(false);
@@ -19,22 +19,24 @@ export default function SetupClient() {
   const supabase = createClient();
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      setUser(user);
-      if (user?.user_metadata?.full_name) {
-        setMemberName(user.user_metadata.full_name);
-      }
-    });
+    const session = readLocalSession();
+    if (!session) {
+      router.push("/login");
+      return;
+    }
+
+    setSessionEmail(session.email);
+    setMemberName(session.name);
   }, []);
 
   // Check if user now has a member record (in case admin just linked them)
   useEffect(() => {
     const interval = setInterval(async () => {
-      if (!user) return;
+      if (!sessionEmail) return;
       const { data } = await supabase
         .from("mess_members")
         .select("id")
-        .eq("user_id", user.id)
+        .eq("email", sessionEmail)
         .maybeSingle();
       if (data) {
         clearInterval(interval);
@@ -42,10 +44,10 @@ export default function SetupClient() {
       }
     }, 5000);
     return () => clearInterval(interval);
-  }, [user]);
+  }, [sessionEmail]);
 
   const createMess = async () => {
-    if (!messName.trim() || !memberName.trim() || !user) {
+    if (!messName.trim() || !memberName.trim() || !sessionEmail) {
       toast.error("Please fill in all fields");
       return;
     }
@@ -54,7 +56,7 @@ export default function SetupClient() {
       // 1. Create mess
       const { data: mess, error: messError } = await supabase
         .from("messes")
-        .insert({ name: messName.trim(), created_by: user.id })
+        .insert({ name: messName.trim(), created_by: null })
         .select()
         .single();
       if (messError) throw messError;
@@ -62,9 +64,9 @@ export default function SetupClient() {
       // 2. Add creator as admin member
       const { error: memberError } = await supabase.from("mess_members").insert({
         mess_id: mess.id,
-        user_id: user.id,
+        user_id: null,
         name: memberName.trim(),
-        email: user.email,
+        email: sessionEmail,
         role: "admin",
         is_active: true,
       });
@@ -214,7 +216,7 @@ export default function SetupClient() {
               <p className="text-sm text-ink-500 leading-relaxed">
                 Share your email with your mess admin:<br />
                 <span className="font-medium text-ink-700 mt-1 inline-block bg-surface-100 px-3 py-1 rounded-lg text-xs">
-                  {user?.email}
+                  {sessionEmail}
                 </span>
               </p>
             </div>

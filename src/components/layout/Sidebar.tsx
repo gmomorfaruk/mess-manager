@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
-import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import {
   UtensilsCrossed,
@@ -17,7 +16,6 @@ import {
   LogOut,
   ChevronRight,
 } from "lucide-react";
-import Image from "next/image";
 import toast from "react-hot-toast";
 
 interface NavItem {
@@ -40,15 +38,14 @@ const navItems: NavItem[] = [
 export default function Sidebar({ messName }: { messName?: string }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, member } = useAuth();
-  const supabase = createClient();
+  const { user, member, signOut } = useAuth();
 
   const role = member?.role ?? "member";
 
   const visibleItems = navItems.filter((item) => item.roles.includes(role));
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
+    signOut();
     toast.success("Signed out");
     router.push("/login");
   };
@@ -105,24 +102,14 @@ export default function Sidebar({ messName }: { messName?: string }) {
       {/* User */}
       <div className="px-3 py-4 border-t border-surface-100">
         <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl">
-          {user?.user_metadata?.avatar_url ? (
-            <Image
-              src={user.user_metadata.avatar_url}
-              alt="avatar"
-              width={32}
-              height={32}
-              className="w-8 h-8 rounded-full flex-shrink-0"
-            />
-          ) : (
-            <div className="w-8 h-8 rounded-full bg-brand-100 flex items-center justify-center flex-shrink-0">
-              <span className="text-xs font-semibold text-brand-700">
-                {member?.name?.[0] ?? "U"}
-              </span>
-            </div>
-          )}
+          <div className="w-8 h-8 rounded-full bg-brand-100 flex items-center justify-center flex-shrink-0">
+            <span className="text-xs font-semibold text-brand-700">
+              {member?.name?.[0] ?? user?.full_name?.[0] ?? "U"}
+            </span>
+          </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-ink-900 truncate">
-              {member?.name ?? user?.user_metadata?.full_name ?? "User"}
+              {member?.name ?? user?.full_name ?? "User"}
             </p>
             <p className="text-xs text-ink-400 truncate">{user?.email}</p>
           </div>

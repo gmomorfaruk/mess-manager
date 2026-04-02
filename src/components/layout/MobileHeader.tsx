@@ -4,7 +4,6 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
-import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import {
   UtensilsCrossed, LayoutDashboard, Users, Settings,
@@ -26,13 +25,12 @@ export default function MobileHeader({ messName }: { messName?: string }) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
-  const { user, member } = useAuth();
-  const supabase = createClient();
+  const { user, member, signOut } = useAuth();
   const role = member?.role ?? "member";
   const visible = navItems.filter((i) => i.roles.includes(role));
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
+    signOut();
     toast.success("Signed out");
     router.push("/login");
     setOpen(false);
@@ -99,7 +97,7 @@ export default function MobileHeader({ messName }: { messName?: string }) {
             <div className="px-3 py-4 border-t border-surface-100">
               <div className="px-3 py-2 mb-1">
                 <p className="text-sm font-medium text-ink-900 truncate">
-                  {member?.name ?? user?.user_metadata?.full_name}
+                  {member?.name ?? user?.full_name}
                 </p>
                 <p className="text-xs text-ink-400 truncate">{user?.email}</p>
               </div>
