@@ -1,0 +1,8 @@
+{
+  "/summary/page": "app/summary/page.js",
+  "/manager/daily-entry/page": "app/manager/daily-entry/page.js",
+  "/admin/members/page": "app/admin/members/page.js",
+  "/admin/settings/page": "app/admin/settings/page.js",
+  "/dashboard/page": "app/dashboard/page.js",
+  "/manager/deposits/page": "app/manager/deposits/page.js"
+}
