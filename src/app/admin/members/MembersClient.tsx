@@ -67,12 +67,13 @@ export default function MembersClient() {
 
   const handleSave = async () => {
     if (!messId || !formName.trim()) { toast.error("Name is required"); return; }
+    const normalizedEmail = formEmail.trim().toLowerCase();
     setSaving(true);
     try {
       if (editingMember) {
         const { error } = await supabase
           .from("mess_members")
-          .update({ name: formName.trim(), email: formEmail || null, role: formRole })
+          .update({ name: formName.trim(), email: normalizedEmail || null, role: formRole })
           .eq("id", editingMember.id);
         if (error) throw error;
         toast.success("Member updated!");
@@ -80,7 +81,7 @@ export default function MembersClient() {
         const { error } = await supabase.from("mess_members").insert({
           mess_id: messId,
           name: formName.trim(),
-          email: formEmail || null,
+          email: normalizedEmail || null,
           role: formRole,
           is_active: true,
         });

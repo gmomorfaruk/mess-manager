@@ -45,14 +45,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { data, error } = await supabase
         .from("mess_members")
         .select("*")
-        .eq("email", email)
+        .ilike("email", email)
         .eq("is_active", true)
         .order("joined_at", { ascending: false })
         .limit(1)
         .maybeSingle();
 
       if (!error && data) {
-        setMember(data);
+        if (!data.user_id || data.user_id !== session.id) {
+          await supabase
+            .from("mess_members")
+            .update({ user_id: session.id })
+            .eq("id", data.id);
+          setMember({ ...data, user_id: session.id });
+        } else {
+          setMember(data);
+        }
         return;
       }
     }

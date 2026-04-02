@@ -52,8 +52,10 @@ export default function LoginPage() {
       const { data, error: memberError } = await supabase
         .from("mess_members")
         .select("id")
-        .eq("email", cleanEmail)
+        .ilike("email", cleanEmail)
         .eq("is_active", true)
+        .order("joined_at", { ascending: false })
+        .limit(1)
         .maybeSingle();
 
       if (memberError) {

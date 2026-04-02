@@ -11,6 +11,7 @@ type Step = "choose" | "create" | "wait" | "done";
 
 export default function SetupClient() {
   const [step, setStep] = useState<Step>("choose");
+  const [sessionId, setSessionId] = useState("");
   const [sessionEmail, setSessionEmail] = useState("");
   const [messName, setMessName] = useState("");
   const [memberName, setMemberName] = useState("");
@@ -26,6 +27,7 @@ export default function SetupClient() {
     }
 
     setSessionEmail(session.email);
+    setSessionId(session.id);
     setMemberName(session.name);
   }, []);
 
@@ -35,19 +37,28 @@ export default function SetupClient() {
       if (!sessionEmail) return;
       const { data } = await supabase
         .from("mess_members")
-        .select("id")
-        .eq("email", sessionEmail)
+        .select("id, user_id")
+        .ilike("email", sessionEmail)
+        .eq("is_active", true)
+        .order("joined_at", { ascending: false })
+        .limit(1)
         .maybeSingle();
       if (data) {
+        if (sessionId && data.user_id !== sessionId) {
+          await supabase
+            .from("mess_members")
+            .update({ user_id: sessionId })
+            .eq("id", data.id);
+        }
         clearInterval(interval);
         router.push("/dashboard");
       }
     }, 5000);
     return () => clearInterval(interval);
-  }, [sessionEmail]);
+  }, [sessionEmail, sessionId, supabase, router]);
 
   const createMess = async () => {
-    if (!messName.trim() || !memberName.trim() || !sessionEmail) {
+    if (!messName.trim() || !memberName.trim() || !sessionEmail || !sessionId) {
       toast.error("Please fill in all fields");
       return;
     }
@@ -64,9 +75,9 @@ export default function SetupClient() {
       // 2. Add creator as admin member
       const { error: memberError } = await supabase.from("mess_members").insert({
         mess_id: mess.id,
-        user_id: null,
+        user_id: sessionId,
         name: memberName.trim(),
-        email: sessionEmail,
+        email: sessionEmail.toLowerCase(),
         role: "admin",
         is_active: true,
       });
